@@ -7,7 +7,7 @@ from alembic import context
 
 from core.config import get_settings
 from db.base import Base
-from models import post,user
+from models import *
 
 config = context.config
 
