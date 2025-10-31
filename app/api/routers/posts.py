@@ -64,4 +64,4 @@ async def restore_post(post_id: int, current_user=Depends(get_current_user), rep
     if post.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="You do not have permission to restore this post")
     restored = await repo.restore(post)
-    return PostRead.from_orm(restored)
+    return PostRead.model_validate(restored)

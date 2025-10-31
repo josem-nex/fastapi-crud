@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from repositories.base import BaseRepository
 from models.post import Post
-from typing import Optional, TypeVar, List
+from typing import Optional, TypeVar, List, Tuple
 
 ModelType = TypeVar("ModelType")
 
@@ -17,13 +17,21 @@ class PostRepository(BaseRepository[Post]):
         return r.scalars().all()
     
     async def list(self, limit: int = 50, offset: int = 0, with_deleted = False) -> List[Post]:
-        stmt = (
-            select(Post)
-            .options(selectinload(Post.tags)) 
-            .limit(limit)
-            .offset(offset)
-            .where(Post.is_deleted == with_deleted)
-        )
+        if with_deleted:
+            stmt = (
+                select(Post)
+                .options(selectinload(Post.tags)) 
+                .limit(limit)
+                .offset(offset)
+            )
+        else:
+            stmt = (
+                select(Post)
+                .options(selectinload(Post.tags)) 
+                .limit(limit)
+                .offset(offset)
+                .where(Post.is_deleted == False)
+            )
         result = await self.session.execute(stmt)
         return result.scalars().all()
     
@@ -33,7 +41,8 @@ class PostRepository(BaseRepository[Post]):
         q = select(self.model).where(self.model.is_deleted == True).limit(limit).offset(offset).options(selectinload(Post.tags))
         r = await self.session.execute(q)
         return r.scalars().all()    
-    
+
+
     async def get(self, id: int, with_deleted: bool = False) -> Optional[ModelType]:
         q = select(self.model).where(self.model.id == id).options(selectinload(Post.tags))
         if hasattr(self.model, "is_deleted") and not with_deleted:
