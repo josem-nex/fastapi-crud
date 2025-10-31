@@ -39,7 +39,6 @@ async def update_post(post_id: int, payload: PostCreate, current_user=Depends(ge
     await repo.update(post)
     return PostRead.model_validate(post)
 
-# Delete (soft) post: solo owner
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(post_id: int, current_user=Depends(get_current_user), repo: PostRepository = Depends(get_post_repo)):
     post = await repo.get(post_id, with_deleted=False)

@@ -12,5 +12,3 @@ app.include_router(posts.router, prefix="/posts", tags=["posts"])
 app.include_router(tags.router, prefix="/tags", tags=["tags"])
 app.include_router(comments.router, prefix="/comments", tags=["comments"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"]) 
-
-

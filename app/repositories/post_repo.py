@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from repositories.base import BaseRepository
 from models.post import Post
-from typing import Optional, TypeVar
+from typing import Optional, TypeVar, List
 
 ModelType = TypeVar("ModelType")
 
@@ -15,16 +15,24 @@ class PostRepository(BaseRepository[Post]):
         q = select(Post).where(Post.owner_id == owner_id).where(Post.is_deleted == False).limit(limit).offset(offset)
         r = await self.session.execute(q)
         return r.scalars().all()
-    async def list(self, limit: int = 50, offset: int = 0) -> list[Post]:
+    
+    async def list(self, limit: int = 50, offset: int = 0, with_deleted = False) -> List[Post]:
         stmt = (
             select(Post)
             .options(selectinload(Post.tags)) 
             .limit(limit)
             .offset(offset)
-            .where(Post.is_deleted == False)
+            .where(Post.is_deleted == with_deleted)
         )
         result = await self.session.execute(stmt)
         return result.scalars().all()
+    
+    async def list_deleted(self, *, limit: int = 50, offset: int = 0) -> List[ModelType]:
+        if not hasattr(self.model, "is_deleted"):
+            return []
+        q = select(self.model).where(self.model.is_deleted == True).limit(limit).offset(offset).options(selectinload(Post.tags))
+        r = await self.session.execute(q)
+        return r.scalars().all()    
     
     async def get(self, id: int, with_deleted: bool = False) -> Optional[ModelType]:
         q = select(self.model).where(self.model.id == id).options(selectinload(Post.tags))
