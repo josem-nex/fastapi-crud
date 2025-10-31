@@ -1,0 +1,34 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from repositories.base import BaseRepository
+from models.post import Post
+from typing import Optional, TypeVar
+
+ModelType = TypeVar("ModelType")
+
+class PostRepository(BaseRepository[Post]):
+    def __init__(self, session: AsyncSession):
+        super().__init__(Post, session)
+
+    async def list_by_owner(self, owner_id: int, limit: int = 50, offset: int = 0):
+        q = select(Post).where(Post.owner_id == owner_id).where(Post.is_deleted == False).limit(limit).offset(offset)
+        r = await self.session.execute(q)
+        return r.scalars().all()
+    async def list(self, limit: int = 50, offset: int = 0) -> list[Post]:
+        stmt = (
+            select(Post)
+            .options(selectinload(Post.tags)) 
+            .limit(limit)
+            .offset(offset)
+            .where(Post.is_deleted == False)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+    
+    async def get(self, id: int, with_deleted: bool = False) -> Optional[ModelType]:
+        q = select(self.model).where(self.model.id == id).options(selectinload(Post.tags))
+        if hasattr(self.model, "is_deleted") and not with_deleted:
+            q = q.where(self.model.is_deleted == False)
+        result = await self.session.execute(q)
+        return result.scalars().first()

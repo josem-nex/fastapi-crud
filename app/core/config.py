@@ -6,10 +6,13 @@ from pydantic import Field
 from pydantic_settings import BaseSettings
 from typing import Optional
 from functools import lru_cache
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parents[1]
 
 class Settings(BaseSettings):
     model_config = {
-        "env_file": ".env",
+        "env_file": str(BASE_DIR / ".env"),
         "env_file_encoding": "utf-8",
     }
 
