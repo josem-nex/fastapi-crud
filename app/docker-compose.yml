@@ -1,0 +1,41 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:15-alpine
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: "${POSTGRESS_URL}"
+    ports:
+      - "${UVICORN_PORT:-8000}:${UVICORN_PORT:-8000}"
+    volumes:
+      - ./:/app  
+    networks:
+      - app-network
+
+volumes:
+  db_data:
+
+networks:
+  app-network:

@@ -1,0 +1,28 @@
+FROM python:3.10-slim
+
+
+ENV APP_HOME=/app
+RUN useradd --create-home appuser
+WORKDIR ${APP_HOME}
+
+COPY requirements.txt .
+
+RUN python -m pip install --upgrade pip \
+ && pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh || true
+
+RUN chown -R appuser:appuser ${APP_HOME}
+USER appuser
+
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+EXPOSE 8000
+
+ENTRYPOINT ["sh","/entrypoint.sh"]
